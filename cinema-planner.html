@@ -368,14 +368,21 @@
 ════════════════════════════════════════════ -->
 <div id="viewImport" class="panel">
   <main>
-    <div class="section-label">Charger les séances</div>
+    <div class="section-label">Charger depuis GitHub</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="search-input" type="url" id="githubUrl" placeholder="URL du fichier JSON sur GitHub…" style="margin-bottom:0;flex:1">
+      <button class="btn" id="githubLoad" style="width:auto;padding:0 14px;flex-shrink:0">Charger</button>
+    </div>
+    <div class="status-msg" id="githubStatus"></div>
+
+    <div class="section-label" style="margin-top:20px">Ou charger depuis l'appareil</div>
     <div class="load-area" id="seancesDropZone">
       <div class="licon">📂</div>
       <p>Déposez votre <strong>seances_SEMAINE.json</strong> ici</p>
       <small>Généré par : python seances.py seances --cinemas cinemas.json</small>
     </div>
     <input type="file" id="seancesFileInput" accept=".json" style="display:none">
-    <button class="btn" id="seancesChooseFile">Choisir seances.json…</button>
+    <button class="btn secondary" id="seancesChooseFile">Choisir seances.json…</button>
     <button class="btn secondary" id="seancesLoadDemo">Charger des séances de démonstration</button>
     <div class="status-msg" id="seancesStatus"></div>
 
@@ -973,6 +980,41 @@ setupDrop('seancesDropZone', 'seancesFileInput', loadSeancesData);
 
 document.getElementById('seancesLoadDemo').onclick = () => {
   loadSeancesData(mockSeancesData());
+};
+
+// Chargement depuis GitHub
+const githubUrlInput = document.getElementById('githubUrl');
+const githubStatus  = document.getElementById('githubStatus');
+
+// Mémoriser la dernière URL utilisée
+githubUrlInput.value = localStorage.getItem('github_url') || '';
+
+document.getElementById('githubLoad').onclick = async () => {
+  let url = githubUrlInput.value.trim();
+  if (!url) { githubStatus.textContent = 'Entrez une URL.'; githubStatus.className = 'status-msg err'; return; }
+
+  // Convertir l'URL GitHub classique en URL raw si nécessaire
+  // https://github.com/user/repo/blob/main/fichier.json
+  // → https://raw.githubusercontent.com/user/repo/main/fichier.json
+  url = url
+    .replace('https://github.com/', 'https://raw.githubusercontent.com/')
+    .replace('/blob/', '/');
+
+  githubStatus.textContent = 'Chargement…';
+  githubStatus.className = 'status-msg';
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    loadSeancesData(text);
+    localStorage.setItem('github_url', githubUrlInput.value.trim());
+    githubStatus.textContent = '✓ Fichier chargé depuis GitHub';
+    githubStatus.className = 'status-msg ok';
+  } catch(e) {
+    githubStatus.textContent = '✗ Erreur : ' + e.message;
+    githubStatus.className = 'status-msg err';
+  }
 };
 
 // ═══════════════════════════════════════════════════════
