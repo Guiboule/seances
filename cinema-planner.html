@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0d0d">
+<title>Séances</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0ede8;
+    --text2: #8a8780;
+    --text3: #555350;
+    --accent: #e8c547;
+    --accent2: #c9a92e;
+    --red: #e05050;
+    --green: #4caf7d;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+    font-size: 15px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 14px 16px 10px;
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  h1 { font-size: 22px; font-weight: 400; letter-spacing: -0.5px; color: var(--accent); }
+  .week-label { font-size: 11px; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; }
+  .week-nav { display: flex; align-items: center; gap: 8px; }
+  .week-arrow {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--surface); border: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 11px; color: var(--text2);
+  }
+  .week-arrow:active { background: var(--surface2); }
+
+  /* ── DAY TABS ── */
+  .day-tabs {
+    display: flex; gap: 5px; overflow-x: auto; padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab {
+    flex-shrink: 0; padding: 5px 10px;
+    border-radius: 20px; cursor: pointer;
+    border: 0.5px solid var(--border);
+    background: transparent;
+    color: var(--text2); font-size: 13px; font-family: inherit;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+  }
+  .day-tab .dname { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .day-tab .dnum  { font-size: 15px; }
+  .day-tab.active { background: var(--accent); border-color: var(--accent); color: #0d0d0d; }
+  .day-tab.today:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  /* ── PANELS ── */
+  .panel { display: none; }
+  .panel.visible { display: block; }
+  main { padding: 12px 16px; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text3); margin-bottom: 10px; margin-top: 20px;
+    font-family: 'Helvetica Neue', sans-serif;
+  }
+  .section-label:first-child { margin-top: 8px; }
+
+  /* ── FILM CARD ── */
+  .film-card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+  }
+  .film-header {
+    padding: 12px 14px; cursor: pointer;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .film-info { flex: 1; min-width: 0; }
+  .film-title { font-size: 15px; font-weight: 400; line-height: 1.3; margin-bottom: 4px; }
+  .film-meta { font-size: 12px; color: var(--text2); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .badge {
+    display: inline-block; padding: 2px 7px; border-radius: 10px;
+    font-size: 10px; font-family: 'Helvetica Neue', sans-serif;
+    background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border);
+  }
+  .badge.genre { background: rgba(232,197,71,0.1); color: var(--accent2); border-color: rgba(232,197,71,0.2); }
+  .film-sub { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: 'Helvetica Neue', sans-serif; }
+  .chevron { font-size: 10px; color: var(--text3); margin-left: auto; flex-shrink: 0; transition: transform 0.2s; padding-top: 3px; }
+  .film-card.open .chevron { transform: rotate(180deg); }
+
+  /* ── CINEMA BLOCK ── */
+  .cinemas-block { border-top: 0.5px solid var(--border); display: none; }
+  .film-card.open .cinemas-block { display: block; }
+  .cinema-row { padding: 10px 14px; border-bottom: 0.5px solid var(--border); }
+  .cinema-row:last-child { border-bottom: none; }
+  .cinema-name { font-size: 13px; margin-bottom: 6px; font-family: 'Helvetica Neue', sans-serif; color: var(--text2); }
+  .horaires { display: flex; flex-wrap: wrap; gap: 6px; }
+  .horaire-pill {
+    padding: 5px 10px; border-radius: 20px;
+    font-size: 12px; font-family: 'Helvetica Neue', sans-serif;
+    background: var(--surface2); border: 0.5px solid var(--border); color: var(--text);
+  }
+  .horaire-pill.in-range  { border-color: var(--accent); color: var(--accent); }
+  .horaire-pill.out-range { color: var(--text3); border-color: transparent; }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 50px 20px; color: var(--text3); }
+  .empty .eicon { font-size: 36px; margin-bottom: 14px; }
+  .empty p { font-size: 13px; line-height: 1.7; }
+  .empty strong { color: var(--text2); font-weight: 400; }
+
+  /* ── BOTTOM NAV ── */
+  nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--bg); border-top: 0.5px solid var(--border);
+    display: flex; padding: 8px 0 env(safe-area-inset-bottom, 12px);
+    z-index: 200;
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 0; background: none; border: none;
+    color: var(--text3); font-size: 9px; font-family: 'Helvetica Neue', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .nav-btn .nicon { font-size: 18px; line-height: 1; }
+  .nav-btn.active { color: var(--accent); }
+
+  /* ── SETTINGS / FILTERS ── */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 13px; }
+  .toggle-sub { font-size: 11px; color: var(--text3); font-family: 'Helvetica Neue', sans-serif; }
+  .toggle {
+    width: 42px; height: 24px; border-radius: 12px;
+    background: var(--surface2); border: 0.5px solid var(--border);
+    cursor: pointer; position: relative; flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; border-radius: 50%; background: white;
+    transition: transform 0.18s;
+  }
+  .toggle.on::after { transform: translateX(18px); }
+
+  /* ── TIME RANGE ── */
+  .time-range-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0; border-bottom: 0.5px solid var(--border); flex-wrap: wrap;
+  }
+  .time-range-day { font-size: 12px; color: var(--text2); width: 60px; flex-shrink: 0; font-family: 'Helvetica Neue', sans-serif; }
+  .time-inputs { display: flex; gap: 6px; align-items: center; }
+  .time-input {
+    background: var(--surface2); border: 0.5px solid var(--border);
+    color: var(--text); padding: 4px 7px; border-radius: 6px;
+    font-size: 13px; width: 72px; font-family: 'Helvetica Neue', sans-serif;
+  }
+  .time-sep { font-size: 11px; color: var(--text3); }
+
+  /* ── IMPORT / LOAD ── */
+  .load-area {
+    border: 1.5px dashed var(--border2); border-radius: var(--radius);
+    padding: 24px 16px; text-align: center; margin-bottom: 12px;
+    cursor: pointer;
+  }
+  .load-area .licon { font-size: 28px; margin-bottom: 8px; }
+  .load-area p { font-size: 13px; color: var(--text2); }
+  .load-area small { font-size: 11px; color: var(--text3); display: block; margin-top: 3px; }
+  .btn {
+    display: block; width: 100%; padding: 12px;
+    background: var(--accent); color: #0d0d0d; border: none;
+    border-radius: var(--radius-sm); font-size: 14px; font-family: 'Georgia', serif;
+    cursor: pointer; margin-bottom: 8px;
+  }
+  .btn:active { background: var(--accent2); }
+  .btn.secondary {
+    background: var(--surface2); color: var(--text2);
+    border: 0.5px solid var(--border);
+  }
+  .status-msg { font-size: 12px; color: var(--text2); text-align: center; margin-top: 8px; font-family: 'Helvetica Neue', sans-serif; }
+  .status-msg.ok  { color: var(--green); }
+  .status-msg.err { color: var(--red); }
+
+  /* ── CINEMAS PANEL ── */
+  .sort-bar {
+    display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .sort-chip {
+    padding: 5px 12px; border-radius: 20px; cursor: pointer;
+    border: 0.5px solid var(--border); background: transparent;
+    color: var(--text2); font-size: 12px; font-family: 'Helvetica Neue', sans-serif;
+  }
+  .sort-chip.active { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+  .search-input {
+    width: 100%; background: var(--surface); border: 0.5px solid var(--border);
+    color: var(--text); padding: 9px 12px; border-radius: var(--radius-sm);
+    font-size: 13px; font-family: 'Helvetica Neue', sans-serif;
+    margin-bottom: 12px;
+  }
+  .search-input::placeholder { color: var(--text3); }
+  .cinema-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 0.5px solid var(--border); gap: 12px;
+  }
+  .cinema-item:last-child { border-bottom: none; }
+  .cinema-item-info { flex: 1; min-width: 0; }
+  .cinema-item-name { font-size: 13px; margin-bottom: 2px; }
+  .cinema-item-sub { font-size: 11px; color: var(--text3); font-family: 'Helvetica Neue', sans-serif; }
+  .cinema-dist { font-size: 11px; color: var(--text3); font-family: 'Helvetica Neue', sans-serif; flex-shrink: 0; }
+  .ville-header {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text3); padding: 14px 0 6px;
+    font-family: 'Helvetica Neue', sans-serif;
+  }
+  .select-all-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0 12px; gap: 12px;
+  }
+  .select-all-row span { font-size: 12px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; }
+  .link-btn {
+    font-size: 12px; color: var(--accent); background: none; border: none;
+    cursor: pointer; font-family: 'Helvetica Neue', sans-serif; padding: 0;
+  }
+
+  /* ── JSON CODE BLOCK ── */
+  .code-block {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 8px; padding: 12px; font-size: 11px;
+    color: var(--text2); font-family: monospace;
+    overflow-x: auto; white-space: pre; margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     HEADER (visible uniquement sur vue Séances)
+════════════════════════════════════════════ -->
+<header id="mainHeader">
+  <div class="header-top">
+    <div>
+      <h1>Séances</h1>
+      <div class="week-label" id="weekLabel"></div>
+    </div>
+    <div class="week-nav">
+      <div class="week-arrow" id="prevWeek">◀</div>
+      <div class="week-arrow" id="nextWeek">▶</div>
+    </div>
+  </div>
+  <div class="day-tabs" id="dayTabs"></div>
+</header>
+
+<!-- ═══════════════════════════════════════════
+     PANEL : SÉANCES
+════════════════════════════════════════════ -->
+<div id="viewSeances" class="panel visible">
+  <main id="seancesMain"></main>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PANEL : CINÉMAS
+════════════════════════════════════════════ -->
+<div id="viewCinemas" class="panel">
+  <main>
+    <div class="section-label">Sélection des cinémas</div>
+
+    <!-- Import cinemas.json -->
+    <div id="cinemasImportZone">
+      <div class="load-area" id="cinemasDropZone">
+        <div class="licon">🗺️</div>
+        <p>Déposez votre <strong>cinemas.json</strong> ici</p>
+        <small>Généré par : python seances.py cinemas --zip 93100</small>
+      </div>
+      <input type="file" id="cinemasFileInput" accept=".json" style="display:none">
+      <button class="btn" id="cinemasChooseFile">Choisir cinemas.json…</button>
+      <button class="btn secondary" id="cinemasLoadDemo">Charger cinémas de démonstration</button>
+      <div class="status-msg" id="cinemasStatus"></div>
+    </div>
+
+    <!-- Liste des cinémas (masquée jusqu'au chargement) -->
+    <div id="cinemasListZone" style="display:none">
+      <input class="search-input" type="search" id="cinemasSearch" placeholder="Rechercher un cinéma…">
+
+      <div class="sort-bar">
+        <button class="sort-chip active" data-sort="ville">Par ville</button>
+        <button class="sort-chip" data-sort="nom">Par nom</button>
+        <button class="sort-chip" data-sort="distance">Par distance</button>
+      </div>
+
+      <div class="select-all-row">
+        <span id="cinemasCount"></span>
+        <div style="display:flex;gap:12px">
+          <button class="link-btn" id="selectAll">Tout cocher</button>
+          <button class="link-btn" id="selectNone">Tout décocher</button>
+        </div>
+      </div>
+
+      <div id="cinemasList"></div>
+
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+        <button class="btn" id="exportCinemas">Exporter cinemas.json mis à jour</button>
+        <button class="btn secondary" id="reimportCinemas">↺ Importer un nouveau cinemas.json…</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═════════════════════════════════════════════
+     PANEL : PAR CINÉMA
+════════════════════════════════════════════ -->
+<div id="viewParCinema" class="panel">
+  <main>
+    <div class="section-label" style="margin-top:8px">Séances par cinéma</div>
+    <input class="search-input" type="search" id="parCinemaSearch" placeholder="Rechercher un cinéma…">
+    <div id="parCinemaMain"></div>
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PANEL : FILTRES
+════════════════════════════════════════════ -->
+<div id="viewFiltres" class="panel">
+  <main>
+    <div class="section-label">Plages horaires par jour</div>
+    <div id="timeRanges"></div>
+
+    <div class="section-label">Films affichés</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <input class="search-input" type="search" id="filmsSearch" placeholder="Rechercher un film…" style="margin-bottom:0;flex:1;min-width:120px">
+      <button class="link-btn" id="filmsSelectAll">Tout cocher</button>
+      <button class="link-btn" id="filmsSelectNone">Tout décocher</button>
+    </div>
+    <div id="filmsFilter"></div>
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PANEL : IMPORTER SÉANCES
+════════════════════════════════════════════ -->
+<div id="viewImport" class="panel">
+  <main>
+    <div class="section-label">Charger les séances</div>
+    <div class="load-area" id="seancesDropZone">
+      <div class="licon">📂</div>
+      <p>Déposez votre <strong>seances_SEMAINE.json</strong> ici</p>
+      <small>Généré par : python seances.py seances --cinemas cinemas.json</small>
+    </div>
+    <input type="file" id="seancesFileInput" accept=".json" style="display:none">
+    <button class="btn" id="seancesChooseFile">Choisir seances.json…</button>
+    <button class="btn secondary" id="seancesLoadDemo">Charger des séances de démonstration</button>
+    <div class="status-msg" id="seancesStatus"></div>
+
+    <div class="section-label" style="margin-top:24px">Format attendu</div>
+    <div class="code-block">{
+  "semaine": "2025-W18",
+  "seances": [
+    {
+      "film": "Titre du film",
+      "duree": 120,
+      "genres": ["Drame"],
+      "cinema": "Nom du cinéma",
+      "date": "2025-05-05",
+      "horaires": ["14:00", "16:30", "20:15"]
+    }
+  ]
+}</div>
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     BOTTOM NAV
+════════════════════════════════════════════ -->
+<nav>
+  <button class="nav-btn active" id="navSeances"  onclick="switchView('Seances')">
+    <span class="nicon">🎬</span>Films
+  </button>
+  <button class="nav-btn" id="navParCinema" onclick="switchView('ParCinema')">
+    <span class="nicon">🏛️</span>Cinémas
+  </button>
+  <button class="nav-btn" id="navGestionCinemas" onclick="switchView('Cinemas')">
+    <span class="nicon">📍</span>Mes ciné
+  </button>
+  <button class="nav-btn" id="navFiltres"  onclick="switchView('Filtres')">
+    <span class="nicon">⚙️</span>Filtres
+  </button>
+  <button class="nav-btn" id="navImport"   onclick="switchView('Import')">
+    <span class="nicon">📥</span>Importer
+  </button>
+</nav>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════════════════════
+const DAYS_FR   = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const DAYS_FULL = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MONTHS_FR = ['jan','fév','mar','avr','mai','juin','juil','aoû','sep','oct','nov','déc'];
+
+// ═══════════════════════════════════════════════════════
+// ÉTAT
+// ═══════════════════════════════════════════════════════
+const S = {
+  // Séances
+  seancesData: null,
+  weekOffset: 0,
+  activeDay: null,
+  openFilms: new Set(),
+  enabledFilms: new Set(),
+  timeRanges: {},
+  // Cinémas
+  filmsSearch: '',
+  parCinemaSearch: '',
+  cinemasData: null,    // tableau d'objets cinéma (avec .selectionne)
+  cinemasSort: 'ville',
+  cinemasSearch: '',
+};
+
+// ═══════════════════════════════════════════════════════
+// DATES
+// ═══════════════════════════════════════════════════════
+function getWeekDates(offset = 0) {
+  const now = new Date();
+  const dow = now.getDay(); // 0=dim, 1=lun, 2=mar, 3=mer, 4=jeu, 5=ven, 6=sam
+  // Nombre de jours à reculer pour atteindre le mercredi précédent (ou aujourd'hui si mercredi)
+  // mer=3 → 0, jeu=4 → 1, ven=5 → 2, sam=6 → 3, dim=0 → 4, lun=1 → 5, mar=2 → 6
+  const daysToWed = (dow + 4) % 7; // distance depuis le mercredi précédent
+  const wednesday = new Date(now);
+  wednesday.setDate(now.getDate() - daysToWed + offset * 7);
+  return Array.from({length: 7}, (_, i) => {
+    const d = new Date(wednesday);
+    d.setDate(wednesday.getDate() + i);
+    return d;
+  });
+}
+const fmtDate = d => d.toISOString().split('T')[0];
+const today   = () => fmtDate(new Date());
+
+// ═══════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════
+function switchView(v) {
+  ['Seances','ParCinema','Cinemas','Filtres','Import'].forEach(name => {
+    document.getElementById('view'+name).classList.toggle('visible', name === v);
+  });
+  ['Seances','ParCinema','GestionCinemas','Filtres','Import'].forEach(name => {
+    const el = document.getElementById('nav'+name);
+    if (el) el.classList.toggle('active', name === v || (name === 'GestionCinemas' && v === 'Cinemas'));
+  });
+  document.getElementById('mainHeader').style.display = v === 'Seances' ? '' : 'none';
+  if (v === 'Filtres') buildFiltresPanel();
+  if (v === 'Cinemas') renderCinemasList();
+  if (v === 'ParCinema') renderParCinema();
+}
+
+// ═══════════════════════════════════════════════════════
+// ONGLET SÉANCES
+// ═══════════════════════════════════════════════════════
+function buildDayTabs() {
+  const dates = getWeekDates(S.weekOffset);
+  const td = today();
+  const wl = document.getElementById('weekLabel');
+  wl.textContent = `Sem. du ${dates[0].getDate()} ${MONTHS_FR[dates[0].getMonth()]} au ${dates[6].getDate()} ${MONTHS_FR[dates[6].getMonth()]}`;
+
+  if (!S.activeDay || !dates.find(d => fmtDate(d) === S.activeDay)) {
+    const inWeek = dates.find(d => fmtDate(d) === td);
+    S.activeDay = fmtDate(inWeek || dates[0]);
+  }
+
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML = '';
+  dates.forEach(d => {
+    const ds = fmtDate(d);
+    const t = document.createElement('div');
+    t.className = 'day-tab' +
+      (ds === S.activeDay ? ' active' : '') +
+      (ds === td && ds !== S.activeDay ? ' today' : '');
+    t.innerHTML = `<span class="dname">${DAYS_FR[d.getDay()]}</span><span class="dnum">${d.getDate()}</span>`;
+    t.onclick = () => { S.activeDay = ds; buildDayTabs(); renderSeances(); };
+    tabs.appendChild(t);
+  });
+}
+
+function isInRange(h, date) {
+  const r = S.timeRanges[date];
+  if (!r) return true;
+  return h >= r.from && h <= r.to;
+}
+
+function selectedCinemaNames() {
+  if (!S.cinemasData) return null; // null = pas de filtre cinémas actif
+  const sel = S.cinemasData.filter(c => c.selectionne).map(c => c.nom);
+  return sel.length ? new Set(sel) : null;
+}
+
+function renderSeances() {
+  const main = document.getElementById('seancesMain');
+  if (!S.seancesData) {
+    main.innerHTML = `<div class="empty"><div class="eicon">🎞️</div><p>Aucune séance chargée.<br>Allez dans <strong>Importer</strong> pour charger votre fichier JSON.</p></div>`;
+    return;
+  }
+
+  const cinemaFilter = selectedCinemaNames();
+  const daySeances = S.seancesData.seances.filter(s => {
+    if (s.date !== S.activeDay) return false;
+    if (cinemaFilter && !cinemaFilter.has(s.cinema)) return false;
+    if (!S.enabledFilms.has(s.film)) return false;
+    return true;
+  });
+
+  // Grouper par film → cinéma → horaires
+  const filmMap = {};
+  daySeances.forEach(s => {
+    if (!filmMap[s.film]) filmMap[s.film] = { genres: s.genres || [], duree: s.duree, cinemas: {} };
+    if (!filmMap[s.film].cinemas[s.cinema]) filmMap[s.film].cinemas[s.cinema] = [];
+    filmMap[s.film].cinemas[s.cinema].push(...(s.horaires || []));
+  });
+
+  const films = Object.keys(filmMap).sort((a, b) => a.localeCompare(b, 'fr'));
+  const dateObj = new Date(S.activeDay + 'T12:00:00');
+
+  if (!films.length) {
+    const hasData = S.seancesData.seances.some(s => s.date === S.activeDay);
+    main.innerHTML = `<div class="empty"><div class="eicon">${hasData ? '🔍' : '🗓️'}</div><p>${hasData ? 'Aucun film ne correspond à vos filtres.' : 'Aucune séance ce jour dans les données chargées.'}</p></div>`;
+    return;
+  }
+
+  const dayLabel = `${DAYS_FULL[dateObj.getDay()]} ${dateObj.getDate()} ${MONTHS_FR[dateObj.getMonth()]}`;
+  main.innerHTML = `<div class="section-label">${films.length} film${films.length>1?'s':''} — ${dayLabel}</div>`;
+
+  films.forEach(filmTitle => {
+    const film = filmMap[filmTitle];
+    const isOpen = S.openFilms.has(filmTitle);
+
+    const inRangeTotal = Object.values(film.cinemas).flat()
+      .filter(h => isInRange(h, S.activeDay)).length;
+    const totalH = Object.values(film.cinemas).flat().length;
+
+    const card = document.createElement('div');
+    card.className = 'film-card' + (isOpen ? ' open' : '');
+
+    const genres = (film.genres||[]).map(g=>`<span class="badge genre">${g}</span>`).join('');
+    const dureeStr = film.duree ? `${Math.floor(film.duree/60)}h${String(film.duree%60).padStart(2,'0')}` : '';
+
+    card.innerHTML = `
+      <div class="film-header">
+        <div class="film-info">
+          <div class="film-title">${filmTitle}</div>
+          <div class="film-meta">${dureeStr ? `<span>${dureeStr}</span>` : ''}${genres}</div>
+          <div class="film-sub">${inRangeTotal ? `${inRangeTotal} séance${inRangeTotal>1?'s':''} dans votre plage` : `${totalH} séance${totalH>1?'s':''} (hors plage)`}</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="cinemas-block"></div>
+    `;
+
+    card.querySelector('.film-header').onclick = () => {
+      S.openFilms.has(filmTitle) ? S.openFilms.delete(filmTitle) : S.openFilms.add(filmTitle);
+      card.classList.toggle('open');
+    };
+
+    const block = card.querySelector('.cinemas-block');
+    Object.entries(film.cinemas).sort().forEach(([cinema, horaires]) => {
+      const row = document.createElement('div');
+      row.className = 'cinema-row';
+      const pills = horaires.sort().map(h => {
+        const ir = isInRange(h, S.activeDay);
+        return `<span class="horaire-pill ${ir?'in-range':'out-range'}">${h}</span>`;
+      }).join('');
+      row.innerHTML = `<div class="cinema-name">${cinema}</div><div class="horaires">${pills}</div>`;
+      block.appendChild(row);
+    });
+
+    main.appendChild(card);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ONGLET CINÉMAS
+// ═══════════════════════════════════════════════════════
+function loadCinemasData(raw) {
+  try {
+    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    const cinemas = data.cinemas || data; // accepte tableau direct ou objet avec .cinemas
+    if (!Array.isArray(cinemas)) throw new Error('Format invalide');
+
+    // Fusionner avec les sélections déjà en mémoire
+    const prev = new Map((S.cinemasData||[]).map(c => [c.nom, c.selectionne]));
+    S.cinemasData = cinemas.map(c => ({
+      ...c,
+      selectionne: prev.has(c.nom) ? prev.get(c.nom) : !!c.selectionne,
+    }));
+
+    saveStorage();
+    document.getElementById('cinemasImportZone').style.display = 'none';
+    document.getElementById('cinemasListZone').style.display = 'block';
+    document.getElementById('cinemasStatus').textContent = '';
+    renderCinemasList();
+    renderSeances(); // re-filtre avec les nouveaux cinémas
+  } catch(e) {
+    document.getElementById('cinemasStatus').textContent = '✗ Erreur : ' + e.message;
+    document.getElementById('cinemasStatus').className = 'status-msg err';
+  }
+}
+
+function renderCinemasList() {
+  if (!S.cinemasData) return;
+  const list = document.getElementById('cinemasList');
+  list.innerHTML = '';
+
+  const q = S.cinemasSearch.toLowerCase();
+  let cinemas = S.cinemasData.filter(c =>
+    !q || c.nom.toLowerCase().includes(q) || (c.ville||'').toLowerCase().includes(q)
+  );
+
+  // Tri
+  if (S.cinemasSort === 'ville') {
+    cinemas = cinemas.slice().sort((a,b) => (a.ville||'').localeCompare(b.ville||'') || a.nom.localeCompare(b.nom));
+  } else if (S.cinemasSort === 'nom') {
+    cinemas = cinemas.slice().sort((a,b) => a.nom.localeCompare(b.nom));
+  } else if (S.cinemasSort === 'distance') {
+    cinemas = cinemas.slice().sort((a,b) => (a.distance_km||999) - (b.distance_km||999));
+  }
+
+  const selCount = S.cinemasData.filter(c=>c.selectionne).length;
+  document.getElementById('cinemasCount').textContent =
+    `${selCount} sélectionné${selCount>1?'s':''} sur ${S.cinemasData.length}`;
+
+  const makeToggle = (cinema) => {
+    const idx = S.cinemasData.findIndex(c => c.nom === cinema.nom);
+    const tgl = document.createElement('div');
+    tgl.className = 'toggle' + (cinema.selectionne ? ' on' : '');
+    tgl.onclick = () => {
+      S.cinemasData[idx].selectionne = !S.cinemasData[idx].selectionne;
+      tgl.classList.toggle('on', S.cinemasData[idx].selectionne);
+      document.getElementById('cinemasCount').textContent =
+        `${S.cinemasData.filter(c=>c.selectionne).length} sélectionné${S.cinemasData.filter(c=>c.selectionne).length>1?'s':''} sur ${S.cinemasData.length}`;
+      saveStorage();
+      renderSeances();
+    };
+    return tgl;
+  };
+
+  if (S.cinemasSort === 'ville') {
+    // Grouper par ville
+    const villes = [...new Set(cinemas.map(c => c.ville||''))].sort();
+    villes.forEach(ville => {
+      const group = cinemas.filter(c => (c.ville||'') === ville);
+      const vh = document.createElement('div');
+      vh.className = 'ville-header';
+      vh.textContent = ville || '—';
+      list.appendChild(vh);
+      group.forEach(cinema => {
+        const row = document.createElement('div');
+        row.className = 'cinema-item';
+        const info = document.createElement('div');
+        info.className = 'cinema-item-info';
+        info.innerHTML = `<div class="cinema-item-name">${cinema.nom}</div><div class="cinema-item-sub">${cinema.adresse||''}</div>`;
+        const dist = document.createElement('div');
+        dist.className = 'cinema-dist';
+        dist.textContent = cinema.distance_km != null ? cinema.distance_km.toFixed(1)+' km' : '';
+        row.appendChild(info);
+        row.appendChild(dist);
+        row.appendChild(makeToggle(cinema));
+        list.appendChild(row);
+      });
+    });
+  } else {
+    cinemas.forEach(cinema => {
+      const row = document.createElement('div');
+      row.className = 'cinema-item';
+      const info = document.createElement('div');
+      info.className = 'cinema-item-info';
+      info.innerHTML = `<div class="cinema-item-name">${cinema.nom}</div><div class="cinema-item-sub">${cinema.ville||''}${cinema.distance_km!=null?' · '+cinema.distance_km.toFixed(1)+' km':''}</div>`;
+      row.appendChild(info);
+      row.appendChild(makeToggle(cinema));
+      list.appendChild(row);
+    });
+  }
+}
+
+// Select all / none
+document.getElementById('selectAll').onclick = () => {
+  S.cinemasData.forEach(c => c.selectionne = true);
+  saveStorage(); renderCinemasList(); renderSeances();
+};
+document.getElementById('selectNone').onclick = () => {
+  S.cinemasData.forEach(c => c.selectionne = false);
+  saveStorage(); renderCinemasList(); renderSeances();
+};
+
+// Sort chips
+document.querySelectorAll('.sort-chip').forEach(chip => {
+  chip.onclick = () => {
+    document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    S.cinemasSort = chip.dataset.sort;
+    renderCinemasList();
+  };
+});
+
+// Search
+document.getElementById('cinemasSearch').oninput = e => {
+  S.cinemasSearch = e.target.value;
+  renderCinemasList();
+};
+
+// Export cinemas.json mis à jour
+document.getElementById('exportCinemas').onclick = () => {
+  if (!S.cinemasData) return;
+  const output = {
+    genere_le: new Date().toISOString(),
+    mis_a_jour_le: new Date().toISOString(),
+    cinemas: S.cinemasData,
+  };
+  const blob = new Blob([JSON.stringify(output, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cinemas.json';
+  a.click();
+};
+
+// Import cinemas.json
+document.getElementById('cinemasChooseFile').onclick = () => document.getElementById('cinemasFileInput').click();
+document.getElementById('cinemasFileInput').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => loadCinemasData(ev.target.result);
+  r.readAsText(f);
+};
+setupDrop('cinemasDropZone', 'cinemasFileInput', loadCinemasData);
+
+document.getElementById('cinemasLoadDemo').onclick = () => {
+  loadCinemasData({ cinemas: mockCinemasData() });
+  document.getElementById('cinemasStatus').textContent = '✓ Cinémas de démonstration chargés';
+  document.getElementById('cinemasStatus').className = 'status-msg ok';
+};
+
+document.getElementById('reimportCinemas').onclick = () => {
+  document.getElementById('cinemasImportZone').style.display = '';
+  document.getElementById('cinemasListZone').style.display = 'none';
+  document.getElementById('cinemasStatus').textContent = '';
+};
+
+// ═══════════════════════════════════════════════════════
+// ONGLET FILTRES
+// ═══════════════════════════════════════════════════════
+function buildFiltresPanel() {
+  // Plages horaires
+  const trDiv = document.getElementById('timeRanges');
+  trDiv.innerHTML = '';
+  getWeekDates(S.weekOffset).forEach(d => {
+    const ds = fmtDate(d);
+    const r  = S.timeRanges[ds] || {from:'09:00', to:'23:59'};
+    const row = document.createElement('div');
+    row.className = 'time-range-row';
+    row.innerHTML = `
+      <div class="time-range-day">${DAYS_FR[d.getDay()]} ${d.getDate()}</div>
+      <div class="time-inputs">
+        <input class="time-input" type="time" value="${r.from}" data-date="${ds}" data-f="from">
+        <span class="time-sep">→</span>
+        <input class="time-input" type="time" value="${r.to}"   data-date="${ds}" data-f="to">
+      </div>`;
+    trDiv.appendChild(row);
+  });
+  trDiv.querySelectorAll('.time-input').forEach(inp => {
+    inp.onchange = () => {
+      const ds = inp.dataset.date;
+      if (!S.timeRanges[ds]) S.timeRanges[ds] = {from:'09:00',to:'23:59'};
+      S.timeRanges[ds][inp.dataset.f] = inp.value;
+      saveStorage(); renderSeances();
+    };
+  });
+
+  // Films
+  const fDiv = document.getElementById('filmsFilter');
+  fDiv.innerHTML = '';
+  if (!S.seancesData) {
+    fDiv.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Importez d\'abord des séances.</div>';
+    return;
+  }
+  const allFilmsSet = [...new Set(S.seancesData.seances.map(s=>s.film))].sort();
+
+  const filmsSearchEl = document.getElementById('filmsSearch');
+  filmsSearchEl.value = S.filmsSearch;
+  filmsSearchEl.oninput = e => { S.filmsSearch = e.target.value; buildFiltresPanel(); };
+
+  document.getElementById('filmsSelectAll').onclick = () => {
+    allFilmsSet.forEach(f => S.enabledFilms.add(f));
+    saveStorage(); buildFiltresPanel(); renderSeances();
+  };
+  document.getElementById('filmsSelectNone').onclick = () => {
+    S.enabledFilms.clear();
+    saveStorage(); buildFiltresPanel(); renderSeances();
+  };
+
+  const qf = S.filmsSearch.toLowerCase();
+  const filmsAfiltrer = qf ? allFilmsSet.filter(f => f.toLowerCase().includes(qf)) : allFilmsSet;
+  filmsAfiltrer.forEach(film => {
+    const on = S.enabledFilms.has(film);
+    const row = document.createElement('div');
+    row.className = 'toggle-row';
+    const lbl = document.createElement('div');
+    lbl.innerHTML = `<div class="toggle-label">${film}</div>`;
+    const tgl = document.createElement('div');
+    tgl.className = 'toggle' + (on?' on':'');
+    tgl.onclick = () => {
+      S.enabledFilms.has(film) ? S.enabledFilms.delete(film) : S.enabledFilms.add(film);
+      tgl.classList.toggle('on', S.enabledFilms.has(film));
+      saveStorage(); renderSeances();
+    };
+    row.appendChild(lbl); row.appendChild(tgl);
+    fDiv.appendChild(row);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ONGLET PAR CINÉMA
+// ═══════════════════════════════════════════════════════
+document.getElementById('parCinemaSearch').oninput = e => {
+  S.parCinemaSearch = e.target.value;
+  renderParCinema();
+};
+
+function renderParCinema() {
+  const main = document.getElementById('parCinemaMain');
+  if (!S.seancesData) {
+    main.innerHTML = `<div class="empty"><div class="eicon">🏞️</div><p>Aucune séance chargée.<br>Allez dans <strong>Importer</strong> pour charger votre fichier JSON.</p></div>`;
+    return;
+  }
+  const cinemaFilter = selectedCinemaNames();
+  const q = (S.parCinemaSearch || '').toLowerCase();
+  const weekDates = getWeekDates(S.weekOffset).map(fmtDate);
+
+  const cinemaMap = {};
+  S.seancesData.seances.forEach(s => {
+    if (!weekDates.includes(s.date)) return;
+    if (cinemaFilter && !cinemaFilter.has(s.cinema)) return;
+    if (!S.enabledFilms.has(s.film)) return;
+    if (q && !s.cinema.toLowerCase().includes(q)) return;
+    if (!cinemaMap[s.cinema]) cinemaMap[s.cinema] = {};
+    if (!cinemaMap[s.cinema][s.date]) cinemaMap[s.cinema][s.date] = {};
+    if (!cinemaMap[s.cinema][s.date][s.film]) cinemaMap[s.cinema][s.date][s.film] = [];
+    cinemaMap[s.cinema][s.date][s.film].push(...(s.horaires || []));
+  });
+
+  const cinemas = Object.keys(cinemaMap).sort();
+  if (!cinemas.length) {
+    main.innerHTML = `<div class="empty"><div class="eicon">🔍</div><p>Aucun cinéma ne correspond à votre recherche.</p></div>`;
+    return;
+  }
+
+  main.innerHTML = '';
+  cinemas.forEach(cinemaName => {
+    const card = document.createElement('div');
+    card.className = 'film-card';
+
+    let totalInRange = 0;
+    weekDates.forEach(ds => {
+      Object.values(cinemaMap[cinemaName][ds] || {}).forEach(hrs => {
+        hrs.forEach(h => { if (isInRange(h, ds)) totalInRange++; });
+      });
+    });
+
+    const header = document.createElement('div');
+    header.className = 'film-header';
+    header.innerHTML = `
+      <div class="film-info">
+        <div class="film-title">${cinemaName}</div>
+        <div class="film-sub">${totalInRange} séance${totalInRange>1?'s':''} dans vos plages</div>
+      </div>
+      <span class="chevron">▼</span>`;
+
+    const body = document.createElement('div');
+    body.className = 'cinemas-block';
+
+    weekDates.forEach(ds => {
+      const films = cinemaMap[cinemaName][ds];
+      if (!films || !Object.keys(films).length) return;
+      const dateObj = new Date(ds + 'T12:00:00');
+      const dayLabel = DAYS_FULL[dateObj.getDay()] + ' ' + dateObj.getDate() + ' ' + MONTHS_FR[dateObj.getMonth()];
+
+      const daySection = document.createElement('div');
+      daySection.className = 'cinema-row';
+      daySection.innerHTML = `<div style="font-size:10px;color:var(--text3);font-family:'Helvetica Neue',sans-serif;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">${dayLabel}</div>`;
+
+      Object.entries(films).sort().forEach(([filmTitle, horaires]) => {
+        const filmRow = document.createElement('div');
+        filmRow.style.marginBottom = '8px';
+        const pills = [...new Set(horaires)].sort().map(h => {
+          const ir = isInRange(h, ds);
+          return `<span class="horaire-pill ${ir?'in-range':'out-range'}">${h}</span>`;
+        }).join('');
+        filmRow.innerHTML = `<div class="cinema-name" style="margin-bottom:4px">${filmTitle}</div><div class="horaires">${pills}</div>`;
+        daySection.appendChild(filmRow);
+      });
+      body.appendChild(daySection);
+    });
+
+    header.onclick = () => card.classList.toggle('open');
+    card.appendChild(header);
+    card.appendChild(body);
+    main.appendChild(card);
+  });
+}
+
+function initTimeRanges() {
+  getWeekDates(S.weekOffset).forEach(d => {
+    const ds = fmtDate(d);
+    if (!S.timeRanges[ds]) S.timeRanges[ds] = {from:'09:00', to:'23:59'};
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// ONGLET IMPORT SÉANCES
+// ═══════════════════════════════════════════════════════
+function loadSeancesData(raw) {
+  try {
+    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!Array.isArray(data.seances)) throw new Error('Format invalide');
+    S.seancesData = data;
+    S.openFilms.clear();
+    S.enabledFilms = new Set(data.seances.map(s => s.film));
+    initTimeRanges();
+    renderSeances();
+    saveStorage();
+    document.getElementById('seancesStatus').textContent =
+      `✓ ${data.seances.length} séances chargées (${data.semaine||'—'})`;
+    document.getElementById('seancesStatus').className = 'status-msg ok';
+    switchView('Seances');
+  } catch(e) {
+    document.getElementById('seancesStatus').textContent = '✗ ' + e.message;
+    document.getElementById('seancesStatus').className = 'status-msg err';
+  }
+}
+
+document.getElementById('seancesChooseFile').onclick = () => document.getElementById('seancesFileInput').click();
+document.getElementById('seancesFileInput').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => loadSeancesData(ev.target.result);
+  r.readAsText(f);
+};
+setupDrop('seancesDropZone', 'seancesFileInput', loadSeancesData);
+
+document.getElementById('seancesLoadDemo').onclick = () => {
+  loadSeancesData(mockSeancesData());
+};
+
+// ═══════════════════════════════════════════════════════
+// GLISSER-DÉPOSER (helper)
+// ═══════════════════════════════════════════════════════
+function setupDrop(zoneId, inputId, callback) {
+  const zone = document.getElementById(zoneId);
+  zone.onclick = () => document.getElementById(inputId).click();
+  zone.ondragover = e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; };
+  zone.ondragleave = () => { zone.style.borderColor=''; };
+  zone.ondrop = e => {
+    e.preventDefault(); zone.style.borderColor='';
+    const f = e.dataTransfer.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => callback(ev.target.result);
+    r.readAsText(f);
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// PERSISTANCE
+// ═══════════════════════════════════════════════════════
+function saveStorage() {
+  try {
+    if (S.seancesData) localStorage.setItem('s_data', JSON.stringify(S.seancesData));
+    if (S.cinemasData) localStorage.setItem('c_data', JSON.stringify(S.cinemasData));
+    localStorage.setItem('s_films',  JSON.stringify([...S.enabledFilms]));
+    localStorage.setItem('s_times',  JSON.stringify(S.timeRanges));
+  } catch(e) {}
+}
+
+function loadStorage() {
+  try {
+    const sd = localStorage.getItem('s_data');
+    const cd = localStorage.getItem('c_data');
+    const sf = localStorage.getItem('s_films');
+    const st = localStorage.getItem('s_times');
+    if (sd) { S.seancesData = JSON.parse(sd); S.enabledFilms = new Set(S.seancesData.seances.map(s=>s.film)); }
+    if (cd) { S.cinemasData = JSON.parse(cd); document.getElementById('cinemasImportZone').style.display='none'; document.getElementById('cinemasListZone').style.display='block'; }
+    if (sf) S.enabledFilms = new Set(JSON.parse(sf));
+    if (st) S.timeRanges = JSON.parse(st);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// DONNÉES DE DÉMONSTRATION
+// ═══════════════════════════════════════════════════════
+function mockCinemasData() {
+  return [
+    {id:'C0201',nom:'Le Kosmos',          adresse:'5 Rue du Capitaine Dreyfus, 93100 Montreuil', ville:'Montreuil', code_postal:'93100', distance_km:1.2, selectionne:true},
+    {id:'C0202',nom:'Méliès',             adresse:'12 Place Jean Jaurès, 93100 Montreuil',       ville:'Montreuil', code_postal:'93100', distance_km:0.8, selectionne:true},
+    {id:'C0203',nom:'CGR Vincennes',      adresse:'5 Rue du Midi, 94300 Vincennes',              ville:'Vincennes', code_postal:'94300', distance_km:3.1, selectionne:false},
+    {id:'C0205',nom:'UGC Rosny 2',        adresse:'Centre Commercial Rosny 2, 93110 Rosny',      ville:'Rosny-sous-Bois',code_postal:'93110',distance_km:5.6,selectionne:false},
+    {id:'C0020',nom:'MK2 Bibliothèque',   adresse:'128 Av. de France, 75013 Paris',              ville:'Paris',     code_postal:'75013', distance_km:7.4, selectionne:true},
+    {id:'C0050',nom:'UGC Les Halles',     adresse:'7 Place de la Rotonde, 75001 Paris',          ville:'Paris',     code_postal:'75001', distance_km:9.8, selectionne:false},
+    {id:'C0076',nom:'Gaumont Opéra',      adresse:'2 Bd des Capucines, 75009 Paris',             ville:'Paris',     code_postal:'75009', distance_km:11.2,selectionne:false},
+    {id:'C0019',nom:'MK2 Odéon',          adresse:'113 Bd Saint-Germain, 75006 Paris',           ville:'Paris',     code_postal:'75006', distance_km:10.1,selectionne:false},
+    {id:'C0102',nom:'Cinéma du Panthéon', adresse:'13 Rue Victor Cousin, 75005 Paris',           ville:'Paris',     code_postal:'75005', distance_km:9.5, selectionne:false},
+    {id:'C0159',nom:'Pathé Beaugrenelle', adresse:'12 Rue Linois, 75015 Paris',                  ville:'Paris',     code_postal:'75015', distance_km:12.1,selectionne:false},
+  ];
+}
+
+function mockSeancesData() {
+  const FILMS = [
+    {titre:'Le Comte de Monte-Cristo', duree:178, genres:['Aventure','Historique']},
+    {titre:'Alien : Romulus',          duree:119, genres:['Science-Fiction','Horreur']},
+    {titre:'Dune : Deuxième Partie',   duree:166, genres:['Science-Fiction']},
+    {titre:'Challengers',              duree:131, genres:['Drame','Romance']},
+    {titre:'Robot Dreams',             duree:102, genres:['Animation']},
+    {titre:"L'Amour ouf",              duree:166, genres:['Drame','Romance']},
+    {titre:"Un p'tit truc en plus",    duree: 87, genres:['Comédie']},
+  ];
+  const SLOTS = ['10:00','10:30','11:00','12:00','13:30','14:00','14:30',
+                 '15:00','16:00','16:30','17:00','18:00','19:00','20:00',
+                 '20:30','21:00','21:30','22:00'];
+  const cinemas = mockCinemasData().map(c=>c.nom);
+  const seances = [];
+  const monday = new Date();
+  monday.setDate(monday.getDate() - monday.getDay() + 1);
+  for (let di=0; di<7; di++) {
+    const d = new Date(monday); d.setDate(monday.getDate()+di);
+    const ds = fmtDate(d);
+    cinemas.forEach((cinema,ci) => {
+      const films = FILMS.filter((_,i)=>(i+ci+di)%3!==0).slice(0,4);
+      films.forEach((film,fi) => {
+        const start = (ci*3+fi*2+di)%8;
+        const n = 2 + (fi%3);
+        const horaires = SLOTS.slice(start, start+n*2).filter((_,i)=>i%2===0);
+        if (horaires.length) seances.push({
+          film:film.titre, duree:film.duree, genres:film.genres,
+          cinema, date:ds, horaires
+        });
+      });
+    });
+  }
+  return { semaine:'DÉMO', genere_le:new Date().toISOString(), seances };
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION SEMAINE
+// ═══════════════════════════════════════════════════════
+document.getElementById('prevWeek').onclick = () => {
+  S.weekOffset--; S.activeDay = null;
+  buildDayTabs(); initTimeRanges(); renderSeances();
+};
+document.getElementById('nextWeek').onclick = () => {
+  S.weekOffset++; S.activeDay = null;
+  buildDayTabs(); initTimeRanges(); renderSeances();
+};
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+loadStorage();
+initTimeRanges();
+buildDayTabs();
+renderSeances();
+</script>
+</body>
+</html>
