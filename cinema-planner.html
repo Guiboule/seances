@@ -251,6 +251,87 @@
     cursor: pointer; font-family: 'Helvetica Neue', sans-serif; padding: 0;
   }
 
+  /* ── VIEW CONTROLS ── */
+  .view-controls {
+    display: flex; gap: 6px; padding: 8px 16px 6px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+  }
+  .ctrl-btn {
+    flex: 1; padding: 6px 8px; border-radius: 20px;
+    border: 0.5px solid var(--border); background: transparent;
+    color: var(--text2); font-size: 11px; font-family: 'Helvetica Neue', sans-serif;
+    cursor: pointer; text-align: center; transition: all 0.15s;
+  }
+  .ctrl-btn.active { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+  .ctrl-btn.active-accent { background: rgba(232,197,71,0.15); border-color: rgba(232,197,71,0.4); color: var(--accent); }
+
+  /* ── PARTAGE ── */
+  .share-btn {
+    font-size: 13px; background: none; border: 0.5px solid var(--border);
+    color: var(--text2); cursor: pointer; border-radius: 20px;
+    padding: 4px 10px; font-family: 'Helvetica Neue', sans-serif;
+    margin: 8px 14px 10px; display: none; align-items: center; gap: 5px;
+  }
+  .film-card.open .share-btn { display: inline-flex; }
+  .share-btn:active { background: var(--surface2); }
+
+  /* ── SÉLECTION MULTIPLE ── */
+  .selection-bar {
+    display: none; position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%);
+    width: calc(100% - 32px); max-width: 448px;
+    background: var(--surface); border: 0.5px solid var(--accent);
+    border-radius: var(--radius); padding: 10px 14px;
+    display: none; align-items: center; justify-content: space-between; gap: 10px;
+    z-index: 150; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .selection-bar.visible { display: flex; }
+  .sel-count { font-size: 13px; color: var(--text2); font-family: 'Helvetica Neue', sans-serif; }
+  .sel-share-btn {
+    background: var(--accent); color: #0d0d0d; border: none;
+    border-radius: 20px; padding: 7px 16px;
+    font-size: 13px; font-family: 'Helvetica Neue', sans-serif;
+    cursor: pointer; font-weight: 500;
+  }
+  .sel-cancel-btn {
+    background: none; color: var(--text2); border: none;
+    font-size: 13px; font-family: 'Helvetica Neue', sans-serif;
+    cursor: pointer; padding: 0;
+  }
+  .film-checkbox {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--border2); background: var(--surface2);
+    display: none; flex-shrink: 0; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .film-checkbox.visible { display: flex; }
+  .film-checkbox.checked { background: var(--accent); border-color: var(--accent); color: #0d0d0d; font-size: 11px; }
+
+  /* ── FAVORI ── */
+  .fav-btn {
+    font-size: 16px; background: none; border: none; cursor: pointer;
+    padding: 0 6px; flex-shrink: 0; opacity: 0.35; transition: opacity 0.15s;
+    line-height: 1;
+  }
+  .fav-btn.on { opacity: 1; }
+
+  /* ── VUE HORAIRE ── */
+  .tranche-header {
+    font-size: 13px; font-family: 'Helvetica Neue', sans-serif;
+    color: var(--accent); font-weight: 500;
+    padding: 14px 0 6px; border-bottom: 0.5px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .tranche-header:first-child { padding-top: 4px; }
+  .tranche-film-row {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 5px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .tranche-film-row:last-child { border-bottom: none; }
+  .tranche-horaires { display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
+  .tranche-film-name { font-size: 13px; color: var(--text2); flex: 1; min-width: 0; }
+  .tranche-cinema-name { font-size: 11px; color: var(--text3); font-family: 'Helvetica Neue', sans-serif; }
+
   /* ── JSON CODE BLOCK ── */
   .code-block {
     background: var(--surface); border: 0.5px solid var(--border);
@@ -278,6 +359,17 @@
   </div>
   <div class="day-tabs" id="dayTabs"></div>
 </header>
+<div class="view-controls" id="viewControls" style="display:none">
+  <button class="ctrl-btn active" id="ctrlParFilm">Par film</button>
+  <button class="ctrl-btn" id="ctrlParHeure">Par heure</button>
+  <button class="ctrl-btn" id="ctrlMasquerHorsPlage">Hors plage</button>
+  <button class="ctrl-btn" id="ctrlSelectMode">✓ Sélect.</button>
+</div>
+<div class="selection-bar" id="selectionBar">
+  <button class="sel-cancel-btn" id="selCancel">Annuler</button>
+  <span class="sel-count" id="selCount">0 film sélectionné</span>
+  <button class="sel-share-btn" id="selShare">⇑ Partager</button>
+</div>
 
 <!-- ═══════════════════════════════════════════
      PANEL : SÉANCES
@@ -318,9 +410,11 @@
 
       <div class="select-all-row">
         <span id="cinemasCount"></span>
-        <div style="display:flex;gap:12px">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end">
           <button class="link-btn" id="selectAll">Tout cocher</button>
           <button class="link-btn" id="selectNone">Tout décocher</button>
+          <button class="link-btn" id="selectFavs">⭐ Cocher favoris</button>
+          <button class="link-btn" id="deselectFavs">☆ Décocher favoris</button>
         </div>
       </div>
 
@@ -445,6 +539,10 @@ const S = {
   timeRanges: {},
   // Cinémas
   filmsSearch: '',
+  selectMode: false,
+  selectedFilms: new Set(),
+  vueMode: 'film',      // 'film' ou 'heure'
+  masquerHorsPlage: false,
   parCinemaSearch: '',
   cinemasData: null,    // tableau d'objets cinéma (avec .selectionne)
   cinemasSort: 'ville',
@@ -488,6 +586,7 @@ function switchView(v) {
     if (el) el.classList.toggle('active', name === v || (name === 'GestionCinemas' && v === 'Cinemas'));
   });
   document.getElementById('mainHeader').style.display = v === 'Seances' ? '' : 'none';
+  document.getElementById('viewControls').style.display = v === 'Seances' ? '' : 'none';
   if (v === 'Filtres') buildFiltresPanel();
   if (v === 'Cinemas') renderCinemasList();
   if (v === 'ParCinema') renderParCinema();
@@ -516,7 +615,7 @@ function buildDayTabs() {
       (ds === S.activeDay ? ' active' : '') +
       (ds === td && ds !== S.activeDay ? ' today' : '');
     t.innerHTML = `<span class="dname">${DAYS_FR[d.getDay()]}</span><span class="dnum">${d.getDate()}</span>`;
-    t.onclick = () => { S.activeDay = ds; buildDayTabs(); renderSeances(); };
+    t.onclick = () => { S.activeDay = ds; S.openFilms.clear(); buildDayTabs(); renderSeances(); };
     tabs.appendChild(t);
   });
 }
@@ -556,21 +655,111 @@ function renderSeances() {
     filmMap[s.film].cinemas[s.cinema].push(...(s.horaires || []));
   });
 
-  const films = Object.keys(filmMap).sort((a, b) => a.localeCompare(b, 'fr'));
+  // Filtrer hors plage si demandé
+  let filmsKeys = Object.keys(filmMap).sort((a, b) => a.localeCompare(b, 'fr'));
+  if (S.masquerHorsPlage) {
+    filmsKeys = filmsKeys.filter(f => {
+      return Object.values(filmMap[f].cinemas).flat().some(h => isInRange(h, S.activeDay));
+    });
+  }
+
   const dateObj = new Date(S.activeDay + 'T12:00:00');
 
-  if (!films.length) {
+  if (!filmsKeys.length) {
     const hasData = S.seancesData.seances.some(s => s.date === S.activeDay);
     main.innerHTML = `<div class="empty"><div class="eicon">${hasData ? '🔍' : '🗓️'}</div><p>${hasData ? 'Aucun film ne correspond à vos filtres.' : 'Aucune séance ce jour dans les données chargées.'}</p></div>`;
     return;
   }
 
   const dayLabel = `${DAYS_FULL[dateObj.getDay()]} ${dateObj.getDate()} ${MONTHS_FR[dateObj.getMonth()]}`;
-  main.innerHTML = `<div class="section-label">${films.length} film${films.length>1?'s':''} — ${dayLabel}</div>`;
 
+  // ── VUE PAR HEURE ──
+  if (S.vueMode === 'heure') {
+    main.innerHTML = `<div class="section-label">${dayLabel}</div>`;
+    // Collecter toutes les séances dans la plage et les indexer par heure
+    const trancheMap = {};
+    filmsKeys.forEach(filmTitle => {
+      const film = filmMap[filmTitle];
+      Object.entries(film.cinemas).forEach(([cinema, horaires]) => {
+        horaires.forEach(h => {
+          if (S.masquerHorsPlage && !isInRange(h, S.activeDay)) return;
+          const heure = parseInt(h.split(':')[0], 10);
+          const key = heure;
+          if (!trancheMap[key]) trancheMap[key] = [];
+          trancheMap[key].push({ film: filmTitle, cinema, heure: h, inRange: isInRange(h, S.activeDay) });
+        });
+      });
+    });
+
+    const tranches = Object.keys(trancheMap).map(Number).sort((a,b) => a-b);
+    if (!tranches.length) {
+      main.innerHTML += `<div class="empty"><div class="eicon">🔍</div><p>Aucune séance dans cette plage.</p></div>`;
+      return;
+    }
+
+    tranches.forEach(heure => {
+      const label = `${heure}h – ${heure+1}h`;
+      const header = document.createElement('div');
+      header.className = 'tranche-header';
+      header.textContent = label;
+      main.appendChild(header);
+
+      // Regrouper par film dans cette tranche
+      const filmsInTranche = {};
+      trancheMap[heure].forEach(item => {
+        if (!filmsInTranche[item.film]) filmsInTranche[item.film] = [];
+        filmsInTranche[item.film].push(item);
+      });
+
+      Object.keys(filmsInTranche).sort((a,b) => a.localeCompare(b,'fr')).forEach(filmTitle => {
+        const items = filmsInTranche[filmTitle];
+
+        // Regrouper les horaires par cinéma
+        const parCinema = {};
+        items.forEach(it => {
+          if (!parCinema[it.cinema]) parCinema[it.cinema] = [];
+          parCinema[it.cinema].push({ h: it.heure, inRange: it.inRange });
+        });
+
+        // Titre du film (une seule fois)
+        const filmHeader = document.createElement('div');
+        filmHeader.style.cssText = 'padding:6px 0 2px;font-size:13px;color:var(--text)';
+        filmHeader.textContent = filmTitle;
+        main.appendChild(filmHeader);
+
+        // Une ligne par cinéma : nom à gauche, horaires à droite
+        Object.entries(parCinema).forEach(([cin, hrs]) => {
+          const row = document.createElement('div');
+          row.className = 'tranche-film-row';
+
+          const cinCol = document.createElement('div');
+          cinCol.className = 'tranche-cinema-name';
+          cinCol.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+          cinCol.textContent = cin;
+
+          const pillsDiv = document.createElement('div');
+          pillsDiv.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;flex-shrink:0';
+          hrs.sort((a,b) => a.h.localeCompare(b.h)).forEach(({h, inRange}) => {
+            pillsDiv.innerHTML += `<span class="horaire-pill ${inRange?'in-range':'out-range'}">${h}</span>`;
+          });
+
+          row.appendChild(cinCol);
+          row.appendChild(pillsDiv);
+          main.appendChild(row);
+        });
+      });
+    });
+    return;
+  }
+
+  // ── VUE PAR FILM (défaut) ──
+  main.innerHTML = `<div class="section-label">${filmsKeys.length} film${filmsKeys.length>1?'s':''} — ${dayLabel}</div>`;
+
+  const films = filmsKeys;
   films.forEach(filmTitle => {
     const film = filmMap[filmTitle];
-    const isOpen = S.openFilms.has(filmTitle);
+    // Ouvert par défaut, sauf si l'utilisateur a explicitement fermé
+    const isOpen = !S.openFilms.has(filmTitle);
 
     const inRangeTotal = Object.values(film.cinemas).flat()
       .filter(h => isInRange(h, S.activeDay)).length;
@@ -579,14 +768,15 @@ function renderSeances() {
     const card = document.createElement('div');
     card.className = 'film-card' + (isOpen ? ' open' : '');
 
-    const genres = (film.genres||[]).map(g=>`<span class="badge genre">${g}</span>`).join('');
     const dureeStr = film.duree ? `${Math.floor(film.duree/60)}h${String(film.duree%60).padStart(2,'0')}` : '';
 
+    const isChecked = S.selectedFilms.has(filmTitle);
     card.innerHTML = `
       <div class="film-header">
+        <div class="film-checkbox${S.selectMode ? ' visible' : ''}${isChecked ? ' checked' : ''}">${isChecked ? '✓' : ''}</div>
         <div class="film-info">
           <div class="film-title">${filmTitle}</div>
-          <div class="film-meta">${dureeStr ? `<span>${dureeStr}</span>` : ''}${genres}</div>
+          ${dureeStr ? `<div class="film-meta"><span>${dureeStr}</span></div>` : ''}
           <div class="film-sub">${inRangeTotal ? `${inRangeTotal} séance${inRangeTotal>1?'s':''} dans votre plage` : `${totalH} séance${totalH>1?'s':''} (hors plage)`}</div>
         </div>
         <span class="chevron">▼</span>
@@ -595,6 +785,20 @@ function renderSeances() {
     `;
 
     card.querySelector('.film-header').onclick = () => {
+      if (S.selectMode) {
+        // En mode sélection : cocher/décocher
+        const cb = card.querySelector('.film-checkbox');
+        if (S.selectedFilms.has(filmTitle)) {
+          S.selectedFilms.delete(filmTitle);
+          cb.classList.remove('checked'); cb.textContent = '';
+        } else {
+          S.selectedFilms.add(filmTitle);
+          cb.classList.add('checked'); cb.textContent = '✓';
+        }
+        updateSelectionBar();
+        return;
+      }
+      // Mode normal : ouvrir/fermer
       S.openFilms.has(filmTitle) ? S.openFilms.delete(filmTitle) : S.openFilms.add(filmTitle);
       card.classList.toggle('open');
     };
@@ -610,6 +814,33 @@ function renderSeances() {
       row.innerHTML = `<div class="cinema-name">${cinema}</div><div class="horaires">${pills}</div>`;
       block.appendChild(row);
     });
+
+    // Bouton partage
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share-btn';
+    shareBtn.textContent = '⇑ Partager';
+    shareBtn.onclick = (e) => {
+      e.stopPropagation();
+      const dateObj = new Date(S.activeDay + 'T12:00:00');
+      const dateLabel = DAYS_FR[dateObj.getDay()] + '. ' + dateObj.getDate() + ' ' + MONTHS_FR[dateObj.getMonth()];
+      const dureeStr = film.duree ? ' (' + Math.floor(film.duree/60) + 'h' + String(film.duree%60).padStart(2,'0') + ')' : '';
+      const lignes = Object.entries(film.cinemas).sort().map(([cinema, horaires]) => {
+        const hrs = horaires.sort().filter(h => isInRange(h, S.activeDay));
+        if (!hrs.length) return null;
+        return cinema + ' : ' + hrs.join(' · ');
+      }).filter(Boolean);
+      if (!lignes.length) { alert('Aucune séance dans votre plage horaire.'); return; }
+      const text = '🎬 _' + filmTitle + '_' + dureeStr + ' — ' + dateLabel + '\n\n' + lignes.join('\n');
+      if (navigator.share) {
+        navigator.share({ text }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(text).then(() => {
+          shareBtn.textContent = '✓ Copié !';
+          setTimeout(() => { shareBtn.textContent = '⇑ Partager'; }, 2000);
+        });
+      }
+    };
+    block.appendChild(shareBtn);
 
     main.appendChild(card);
   });
@@ -666,8 +897,25 @@ function renderCinemasList() {
   document.getElementById('cinemasCount').textContent =
     `${selCount} sélectionné${selCount>1?'s':''} sur ${S.cinemasData.length}`;
 
-  const makeToggle = (cinema) => {
+  const makeControls = (cinema) => {
     const idx = S.cinemasData.findIndex(c => c.nom === cinema.nom);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0';
+
+    // Étoile favori
+    const fav = document.createElement('button');
+    fav.className = 'fav-btn' + (cinema.favori ? ' on' : '');
+    fav.textContent = '⭐';
+    fav.title = cinema.favori ? 'Retirer des favoris' : 'Ajouter aux favoris';
+    fav.onclick = (e) => {
+      e.stopPropagation();
+      S.cinemasData[idx].favori = !S.cinemasData[idx].favori;
+      fav.classList.toggle('on', S.cinemasData[idx].favori);
+      fav.title = S.cinemasData[idx].favori ? 'Retirer des favoris' : 'Ajouter aux favoris';
+      saveStorage();
+    };
+
+    // Toggle sélection
     const tgl = document.createElement('div');
     tgl.className = 'toggle' + (cinema.selectionne ? ' on' : '');
     tgl.onclick = () => {
@@ -678,7 +926,10 @@ function renderCinemasList() {
       saveStorage();
       renderSeances();
     };
-    return tgl;
+
+    wrap.appendChild(fav);
+    wrap.appendChild(tgl);
+    return wrap;
   };
 
   if (S.cinemasSort === 'ville') {
@@ -701,7 +952,7 @@ function renderCinemasList() {
         dist.textContent = cinema.distance_km != null ? cinema.distance_km.toFixed(1)+' km' : '';
         row.appendChild(info);
         row.appendChild(dist);
-        row.appendChild(makeToggle(cinema));
+        row.appendChild(makeControls(cinema));
         list.appendChild(row);
       });
     });
@@ -713,19 +964,27 @@ function renderCinemasList() {
       info.className = 'cinema-item-info';
       info.innerHTML = `<div class="cinema-item-name">${cinema.nom}</div><div class="cinema-item-sub">${cinema.ville||''}${cinema.distance_km!=null?' · '+cinema.distance_km.toFixed(1)+' km':''}</div>`;
       row.appendChild(info);
-      row.appendChild(makeToggle(cinema));
+      row.appendChild(makeControls(cinema));
       list.appendChild(row);
     });
   }
 }
 
-// Select all / none
+// Select all / none / favoris
 document.getElementById('selectAll').onclick = () => {
   S.cinemasData.forEach(c => c.selectionne = true);
   saveStorage(); renderCinemasList(); renderSeances();
 };
 document.getElementById('selectNone').onclick = () => {
   S.cinemasData.forEach(c => c.selectionne = false);
+  saveStorage(); renderCinemasList(); renderSeances();
+};
+document.getElementById('selectFavs').onclick = () => {
+  S.cinemasData.forEach(c => { if (c.favori) c.selectionne = true; });
+  saveStorage(); renderCinemasList(); renderSeances();
+};
+document.getElementById('deselectFavs').onclick = () => {
+  S.cinemasData.forEach(c => { if (c.favori) c.selectionne = false; });
   saveStorage(); renderCinemasList(); renderSeances();
 };
 
@@ -1131,11 +1390,104 @@ document.getElementById('nextWeek').onclick = () => {
 };
 
 // ═══════════════════════════════════════════════════════
+// BOUTONS DE CONTRÔLE VUE SÉANCES
+// ═══════════════════════════════════════════════════════
+function updateCtrlBtns() {
+  document.getElementById('ctrlParFilm').classList.toggle('active', S.vueMode === 'film');
+  document.getElementById('ctrlParHeure').classList.toggle('active', S.vueMode === 'heure');
+  document.getElementById('ctrlMasquerHorsPlage').classList.toggle('active-accent', S.masquerHorsPlage);
+}
+
+function updateSelectionBar() {
+  const bar = document.getElementById('selectionBar');
+  const n = S.selectedFilms.size;
+  bar.classList.toggle('visible', S.selectMode);
+  document.getElementById('selCount').textContent = n + ' film' + (n > 1 ? 's' : '') + ' sélectionné' + (n > 1 ? 's' : '');
+  document.getElementById('selShare').disabled = n === 0;
+  document.getElementById('ctrlSelectMode').classList.toggle('active', S.selectMode);
+}
+
+document.getElementById('ctrlSelectMode').onclick = () => {
+  S.selectMode = !S.selectMode;
+  if (!S.selectMode) S.selectedFilms.clear();
+  updateSelectionBar();
+  renderSeances();
+};
+
+document.getElementById('selCancel').onclick = () => {
+  S.selectMode = false;
+  S.selectedFilms.clear();
+  updateSelectionBar();
+  renderSeances();
+};
+
+document.getElementById('selShare').onclick = () => {
+  if (!S.seancesData || !S.selectedFilms.size) return;
+  const dateObj = new Date(S.activeDay + 'T12:00:00');
+  const dateLabel = DAYS_FR[dateObj.getDay()] + '. ' + dateObj.getDate() + ' ' + MONTHS_FR[dateObj.getMonth()];
+
+  // Reconstruire filmMap pour accéder aux données
+  const cinemaFilter = selectedCinemaNames();
+  const daySeances = S.seancesData.seances.filter(s => {
+    if (s.date !== S.activeDay) return false;
+    if (cinemaFilter && !cinemaFilter.has(s.cinema)) return false;
+    if (!S.enabledFilms.has(s.film)) return false;
+    if (!S.selectedFilms.has(s.film)) return false;
+    return true;
+  });
+  const fMap = {};
+  const dureeMap = {};
+  daySeances.forEach(s => {
+    if (!fMap[s.film]) fMap[s.film] = {};
+    if (!fMap[s.film][s.cinema]) fMap[s.film][s.cinema] = [];
+    fMap[s.film][s.cinema].push(...(s.horaires||[]));
+    if (s.duree && !dureeMap[s.film]) dureeMap[s.film] = s.duree;
+  });
+
+  const blocs = [...S.selectedFilms].sort((a,b) => a.localeCompare(b,'fr')).map(filmTitle => {
+    if (!fMap[filmTitle]) return null;
+    const lignes = Object.entries(fMap[filmTitle]).sort().map(([cinema, horaires]) => {
+      const hrs = horaires.sort().filter(h => isInRange(h, S.activeDay));
+      return hrs.length ? cinema + ' : ' + hrs.join(' · ') : null;
+    }).filter(Boolean);
+    if (!lignes.length) return null;
+    const d = dureeMap[filmTitle];
+    const dureeStr = d ? ' (' + Math.floor(d/60) + 'h' + String(d%60).padStart(2,'0') + ')' : '';
+    return '🎬 _' + filmTitle + '_' + dureeStr + '\n' + lignes.join('\n');
+  }).filter(Boolean);
+
+  if (!blocs.length) { alert('Aucune séance dans votre plage pour les films sélectionnés.'); return; }
+  const text = dateLabel + '\n\n' + blocs.join('\n\n');
+
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      document.getElementById('selShare').textContent = '✓ Copié !';
+      setTimeout(() => { document.getElementById('selShare').textContent = '⇑ Partager'; }, 2000);
+    });
+  }
+};
+
+document.getElementById('ctrlParFilm').onclick = () => {
+  S.vueMode = 'film'; updateCtrlBtns(); renderSeances();
+};
+document.getElementById('ctrlParHeure').onclick = () => {
+  S.vueMode = 'heure'; updateCtrlBtns(); renderSeances();
+};
+document.getElementById('ctrlMasquerHorsPlage').onclick = () => {
+  S.masquerHorsPlage = !S.masquerHorsPlage; updateCtrlBtns(); renderSeances();
+};
+
+// ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 loadStorage();
 initTimeRanges();
 buildDayTabs();
+updateCtrlBtns();
+updateSelectionBar();
+document.getElementById('viewControls').style.display = '';
 renderSeances();
 </script>
 </body>
