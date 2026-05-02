@@ -452,6 +452,8 @@
       <input class="search-input" type="search" id="filmsSearch" placeholder="Rechercher un film…" style="margin-bottom:0;flex:1;min-width:120px">
       <button class="link-btn" id="filmsSelectAll">Tout cocher</button>
       <button class="link-btn" id="filmsSelectNone">Tout décocher</button>
+      <button class="link-btn" id="filmsSelectFavs">⭐ Cocher favoris</button>
+      <button class="link-btn" id="filmsDeselectFavs">☆ Décocher favoris</button>
     </div>
     <div id="filmsFilter"></div>
   </main>
@@ -539,6 +541,7 @@ const S = {
   timeRanges: {},
   // Cinémas
   filmsSearch: '',
+  favorisFilms: new Set(),
   selectMode: false,
   selectedFilms: new Set(),
   vueMode: 'film',      // 'film' ou 'heure'
@@ -1092,14 +1095,38 @@ function buildFiltresPanel() {
     S.enabledFilms.clear();
     saveStorage(); buildFiltresPanel(); renderSeances();
   };
+  document.getElementById('filmsSelectFavs').onclick = () => {
+    allFilmsSet.forEach(f => { if (S.favorisFilms.has(f)) S.enabledFilms.add(f); });
+    saveStorage(); buildFiltresPanel(); renderSeances();
+  };
+  document.getElementById('filmsDeselectFavs').onclick = () => {
+    allFilmsSet.forEach(f => { if (S.favorisFilms.has(f)) S.enabledFilms.delete(f); });
+    saveStorage(); buildFiltresPanel(); renderSeances();
+  };
 
   const qf = S.filmsSearch.toLowerCase();
   const filmsAfiltrer = qf ? allFilmsSet.filter(f => f.toLowerCase().includes(qf)) : allFilmsSet;
   filmsAfiltrer.forEach(film => {
     const on = S.enabledFilms.has(film);
+    const isFav = S.favorisFilms.has(film);
     const row = document.createElement('div');
     row.className = 'toggle-row';
+
+    // Étoile favori
+    const fav = document.createElement('button');
+    fav.className = 'fav-btn' + (isFav ? ' on' : '');
+    fav.textContent = '⭐';
+    fav.title = isFav ? 'Retirer des favoris' : 'Ajouter aux favoris';
+    fav.onclick = () => {
+      if (S.favorisFilms.has(film)) S.favorisFilms.delete(film);
+      else S.favorisFilms.add(film);
+      fav.classList.toggle('on', S.favorisFilms.has(film));
+      fav.title = S.favorisFilms.has(film) ? 'Retirer des favoris' : 'Ajouter aux favoris';
+      saveStorage();
+    };
+
     const lbl = document.createElement('div');
+    lbl.style.flex = '1';
     lbl.innerHTML = `<div class="toggle-label">${film}</div>`;
     const tgl = document.createElement('div');
     tgl.className = 'toggle' + (on?' on':'');
@@ -1108,7 +1135,7 @@ function buildFiltresPanel() {
       tgl.classList.toggle('on', S.enabledFilms.has(film));
       saveStorage(); renderSeances();
     };
-    row.appendChild(lbl); row.appendChild(tgl);
+    row.appendChild(fav); row.appendChild(lbl); row.appendChild(tgl);
     fDiv.appendChild(row);
   });
 }
@@ -1219,7 +1246,13 @@ function loadSeancesData(raw) {
     if (!Array.isArray(data.seances)) throw new Error('Format invalide');
     S.seancesData = data;
     S.openFilms.clear();
-    S.enabledFilms = new Set(data.seances.map(s => s.film));
+    // Ne cocher que les favoris (ou tous si aucun favori défini)
+    const allFilms = [...new Set(data.seances.map(s => s.film))];
+    if (S.favorisFilms.size > 0) {
+      S.enabledFilms = new Set(allFilms.filter(f => S.favorisFilms.has(f)));
+    } else {
+      S.enabledFilms = new Set(allFilms);
+    }
     initTimeRanges();
     renderSeances();
     saveStorage();
@@ -1304,6 +1337,7 @@ function setupDrop(zoneId, inputId, callback) {
 function saveStorage() {
   try {
     if (S.seancesData) localStorage.setItem('s_data', JSON.stringify(S.seancesData));
+    localStorage.setItem('f_films', JSON.stringify([...S.favorisFilms]));
     if (S.cinemasData) localStorage.setItem('c_data', JSON.stringify(S.cinemasData));
     localStorage.setItem('s_films',  JSON.stringify([...S.enabledFilms]));
     localStorage.setItem('s_times',  JSON.stringify(S.timeRanges));
@@ -1312,6 +1346,8 @@ function saveStorage() {
 
 function loadStorage() {
   try {
+    const ff = localStorage.getItem('f_films');
+    if (ff) S.favorisFilms = new Set(JSON.parse(ff));
     const sd = localStorage.getItem('s_data');
     const cd = localStorage.getItem('c_data');
     const sf = localStorage.getItem('s_films');
