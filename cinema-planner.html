@@ -482,6 +482,17 @@
     <button class="btn secondary" id="seancesLoadDemo">Charger des séances de démonstration</button>
     <div class="status-msg" id="seancesStatus"></div>
 
+    <div class="section-label" style="margin-top:24px">Mes préférences</div>
+    <button class="btn secondary" id="exportPrefs">↓ Exporter mes préférences</button>
+    <div class="load-area" id="prefsDropZone" style="margin-top:8px">
+      <div class="licon">⚙️</div>
+      <p>Déposez votre <strong>preferences.json</strong> ici</p>
+      <small>Pour synchroniser depuis un autre appareil</small>
+    </div>
+    <input type="file" id="prefsFileInput" accept=".json" style="display:none">
+    <button class="btn secondary" id="importPrefsBtn">Choisir preferences.json…</button>
+    <div class="status-msg" id="prefsStatus"></div>
+
     <div class="section-label" style="margin-top:24px">Format attendu</div>
     <div class="code-block">{
   "semaine": "2025-W18",
@@ -1313,6 +1324,66 @@ document.getElementById('githubLoad').onclick = async () => {
     githubStatus.className = 'status-msg err';
   }
 };
+
+// ═══════════════════════════════════════════════════════
+// PRÉFÉRENCES
+// ═══════════════════════════════════════════════════════
+function exportPreferences() {
+  const prefs = {
+    version: 1,
+    exporte_le: new Date().toISOString(),
+    favorisFilms: [...S.favorisFilms],
+    favorissCinemas: (S.cinemasData || []).filter(c => c.favori).map(c => c.nom),
+    cinemasSelectionnes: (S.cinemasData || []).filter(c => c.selectionne).map(c => c.nom),
+    timeRanges: S.timeRanges,
+  };
+  const blob = new Blob([JSON.stringify(prefs, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'preferences.json';
+  a.click();
+}
+
+function importPreferences(raw) {
+  try {
+    const prefs = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!prefs.version) throw new Error('Format invalide');
+
+    // Favoris films
+    if (prefs.favorisFilms) S.favorisFilms = new Set(prefs.favorisFilms);
+
+    // Favoris et sélection cinémas
+    if (S.cinemasData) {
+      const favSet = new Set(prefs.favorissCinemas || []);
+      const selSet = new Set(prefs.cinemasSelectionnes || []);
+      S.cinemasData.forEach(c => {
+        if (favSet.size) c.favori = favSet.has(c.nom);
+        if (selSet.size) c.selectionne = selSet.has(c.nom);
+      });
+    }
+
+    // Plages horaires
+    if (prefs.timeRanges) S.timeRanges = prefs.timeRanges;
+
+    saveStorage();
+    renderSeances();
+    document.getElementById('prefsStatus').textContent = '✓ Préférences importées avec succès';
+    document.getElementById('prefsStatus').className = 'status-msg ok';
+  } catch(e) {
+    document.getElementById('prefsStatus').textContent = '✗ Erreur : ' + e.message;
+    document.getElementById('prefsStatus').className = 'status-msg err';
+  }
+}
+
+document.getElementById('exportPrefs').onclick = exportPreferences;
+document.getElementById('importPrefsBtn').onclick = () => document.getElementById('prefsFileInput').click();
+document.getElementById('prefsFileInput').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => importPreferences(ev.target.result);
+  r.readAsText(f);
+};
+setupDrop('prefsDropZone', 'prefsFileInput', importPreferences);
 
 // ═══════════════════════════════════════════════════════
 // GLISSER-DÉPOSER (helper)
