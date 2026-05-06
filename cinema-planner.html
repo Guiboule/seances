@@ -1333,6 +1333,7 @@ function exportPreferences() {
     version: 1,
     exporte_le: new Date().toISOString(),
     favorisFilms: [...S.favorisFilms],
+    filmsCoches: [...S.enabledFilms],
     favorissCinemas: (S.cinemasData || []).filter(c => c.favori).map(c => c.nom),
     cinemasSelectionnes: (S.cinemasData || []).filter(c => c.selectionne).map(c => c.nom),
     timeRanges: S.timeRanges,
@@ -1351,6 +1352,9 @@ function importPreferences(raw) {
 
     // Favoris films
     if (prefs.favorisFilms) S.favorisFilms = new Set(prefs.favorisFilms);
+
+    // Films cochés
+    if (prefs.filmsCoches) S.enabledFilms = new Set(prefs.filmsCoches);
 
     // Favoris et sélection cinémas
     if (S.cinemasData) {
