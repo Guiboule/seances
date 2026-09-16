@@ -876,7 +876,7 @@ function renderSeances() {
       }).filter(Boolean);
       if (!lignes.length) { alert('Aucune séance dans votre plage horaire.'); return; }
       const text = '🎬 _' + filmTitle + '_' + dureeStr + ' — ' + dateLabel + '\n\n' + lignes.join('\n');
-      if (navigator.share) { navigator.share({ text }).catch(() => showShareModal(text)); }
+      if (navigator.share && /Android|iPhone|iPad/i.test(navigator.userAgent)) { navigator.share({ text }).catch(() => showShareModal(text)); }
       else { showShareModal(text); }
     };
     block.appendChild(shareBtn);
@@ -1595,7 +1595,7 @@ document.getElementById('selShare').onclick = () => {
   if (!blocs.length) { alert('Aucune séance dans votre plage pour les films sélectionnés.'); return; }
   const text = dateLabel + '\n\n' + blocs.join('\n\n');
 
-  if (navigator.share) { navigator.share({ text }).catch(() => showShareModal(text)); }
+  if (navigator.share && /Android|iPhone|iPad/i.test(navigator.userAgent)) { navigator.share({ text }).catch(() => showShareModal(text)); }
   else { showShareModal(text); }
 };
 
