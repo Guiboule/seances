@@ -535,7 +535,7 @@
 ════════════════════════════════════════════ -->
 <div class="share-modal-overlay" id="shareModal" onclick="closeShareModal(event)">
   <div class="share-modal">
-    <div class="share-modal-title">Copiez ce texte et collez-le dans WhatsApp ou ailleurs :</div>
+    <div class="share-modal-title" id="shareModalTitle">Texte copié — collez-le dans WhatsApp ou ailleurs :</div>
     <textarea id="shareModalText" readonly></textarea>
     <div class="share-modal-btns">
       <button class="btn" id="shareModalCopy" style="flex:1">Copier</button>
@@ -1632,7 +1632,17 @@ function doShare(text) {
 function showShareModal(text) {
   document.getElementById('shareModalText').value = text;
   document.getElementById('shareModal').classList.add('visible');
-  setTimeout(() => document.getElementById('shareModalText').select(), 100);
+  // Copier automatiquement dès l ouverture
+  setTimeout(() => {
+    const ta = document.getElementById('shareModalText');
+    ta.select();
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        document.getElementById('shareModalCopy').textContent = '✓ Copié !';
+        setTimeout(() => { document.getElementById('shareModalCopy').textContent = 'Copier'; }, 3000);
+      }).catch(() => {});
+    }
+  }, 100);
 }
 
 function closeShareModal(e) {
