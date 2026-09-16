@@ -266,6 +266,26 @@
   .ctrl-btn.active { background: var(--surface2); border-color: var(--border2); color: var(--text); }
   .ctrl-btn.active-accent { background: rgba(232,197,71,0.15); border-color: rgba(232,197,71,0.4); color: var(--accent); }
 
+  /* ── MODALE PARTAGE ── */
+  .share-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .share-modal-overlay.visible { display: flex; }
+  .share-modal {
+    background: var(--surface); border: 0.5px solid var(--border2);
+    border-radius: var(--radius); width: 100%; max-width: 440px; padding: 20px;
+  }
+  .share-modal-title { font-size: 14px; color: var(--text2); margin-bottom: 10px; font-family: 'Helvetica Neue', sans-serif; }
+  .share-modal textarea {
+    width: 100%; background: var(--surface2); border: 0.5px solid var(--border);
+    color: var(--text); border-radius: var(--radius-sm); padding: 10px;
+    font-size: 13px; font-family: 'Helvetica Neue', sans-serif;
+    resize: none; min-height: 120px; margin-bottom: 10px;
+  }
+  .share-modal-btns { display: flex; gap: 8px; }
+
   /* ── PARTAGE ── */
   .share-btn {
     font-size: 13px; background: none; border: 0.5px solid var(--border);
@@ -513,6 +533,17 @@
 <!-- ═══════════════════════════════════════════
      BOTTOM NAV
 ════════════════════════════════════════════ -->
+<div class="share-modal-overlay" id="shareModal" onclick="closeShareModal(event)">
+  <div class="share-modal">
+    <div class="share-modal-title">Copiez ce texte et collez-le dans WhatsApp ou ailleurs :</div>
+    <textarea id="shareModalText" readonly></textarea>
+    <div class="share-modal-btns">
+      <button class="btn" id="shareModalCopy" style="flex:1">Copier</button>
+      <button class="btn secondary" onclick="document.getElementById('shareModal').classList.remove('visible')" style="flex:1">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <nav>
   <button class="nav-btn active" id="navSeances"  onclick="switchView('Seances')">
     <span class="nicon">🎬</span>Films
